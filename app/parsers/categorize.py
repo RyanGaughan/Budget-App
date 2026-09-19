@@ -29,23 +29,28 @@ CATEGORY_RULES = {
     "Groceries": [
         "safeway", "kroger", "trader joe", "whole foods", "wegmans", "publix",
         "albertsons", "vons", "ralphs", "aldi", "sprouts", "costco wholesale",
-        "walmart grocery", "grocery",
+        "walmart grocery", "grocery", "central market", "wholefds", "wild fork",
     ],
     "Dining & Coffee": [
         "starbucks", "peet's", "peets coffee", "dunkin", "mcdonald", "chipotle",
         "doordash", "uber eats", "grubhub", "postmates", "restaurant", "cafe",
         "coffee", "pizza", "taco", "sushi", "bar & grill", "diner", "bistro",
         "burger", "deli",
+        # POS-system prefixes that are overwhelmingly restaurants/cafes even
+        # though the merchant name itself varies (each is its own business):
+        "tst*", "tst *",
+        "eatzi", "sweetgreen", "flower child",
     ],
     "Transportation": [
         "uber", "lyft", "shell oil", "chevron", "exxon", "76 -", "arco",
-        "gas station", "parking", "toll", "dmv", "metro transit", "bart",
+        "gas station", "parking", "toll", "dmv", "tx dps", "metro transit", "bart",
         "caltrain", "auto repair", "jiffy lube", "valvoline",
     ],
     "Travel": [
         "airlines", "airbnb", "expedia", "booking.com", "marriott", "hilton",
         "hyatt", "delta air", "united air", "southwest", "alaska air",
         "hotel", "rental car", "avis", "hertz", "enterprise rent",
+        "american0",  # AA ticket charges post as "AMERICAN0012345678 PHOENIX AZ"
     ],
     "Shopping": [
         "amazon", "amzn", "target", "walmart", "ebay", "best buy", "ikea",
@@ -61,6 +66,7 @@ CATEGORY_RULES = {
         "pharmacy", "cvs", "walgreens", "rite aid", "gym", "fitness",
         "planet fitness", "equinox", "24 hour fitness", "yoga", "urgent care",
         "medical", "dental", "clinic", "hospital", "doctor",
+        "counseling", "therapy", "vitamin shoppe", "vitaminshoppe",
     ],
     "Insurance": [
         "insurance", "geico", "state farm", "progressive", "allstate",
@@ -68,10 +74,11 @@ CATEGORY_RULES = {
     ],
     "Entertainment": [
         "movie", "cinema", "amc ", "regal cinemas", "ticketmaster", "steam games",
-        "concert", "museum", "bowling",
+        "concert", "museum", "bowling", "golf",
     ],
     "Personal Care": [
-        "salon", "barber", "spa", "nails", "sephora", "ulta",
+        "salon", "barber", "spa", "nails", "sephora", "ulta", "floyd's 99",
+        "floyd s 99",
     ],
     "Fees & Interest": [
         "interest charge", "late fee", "annual fee", "overdraft", "service fee",

@@ -2,17 +2,36 @@
 {% block title %}Dashboard{% endblock %}
 {% block content %}
 
+{% if has_household %}
+<div style="display:flex; gap:8px; margin-bottom:16px;">
+  <a href="{{ url_for('main.dashboard') }}" class="btn" style="{% if not is_combined %}opacity:1;{% else %}opacity:0.5; background:var(--text-secondary);{% endif %}">My spending</a>
+  <a href="{{ url_for('main.dashboard', scope='household') }}" class="btn" style="{% if is_combined %}opacity:1;{% else %}opacity:0.5; background:var(--text-secondary);{% endif %}">Combined household</a>
+</div>
+{% endif %}
+
 {% if not has_data %}
 <div class="card" style="text-align:center; padding:60px 24px;">
-  <h2>No statements uploaded yet</h2>
-  <p style="color:var(--text-secondary);">Upload your credit card and bank statement PDFs to see your spending breakdown.</p>
+  <h2>No statements{{ ' between you' if is_combined else '' }} uploaded yet</h2>
+  <p style="color:var(--text-secondary);">Upload credit card and bank statement PDFs to see a spending breakdown.</p>
   <a class="btn" href="{{ url_for('main.upload') }}">Upload statements</a>
 </div>
 {% else %}
 
 <div style="margin-bottom:20px;">
-  <div style="font-size:13px; color:var(--text-secondary);">{{ date_range[0] }} to {{ date_range[1] }} · {{ num_months }} months · {{ total_transactions }} transactions</div>
+  <div style="font-size:13px; color:var(--text-secondary);">{{ date_range[0] }} to {{ date_range[1] }} · {{ num_months }} months · {{ total_transactions }} transactions{{ ' · combined household view' if is_combined else '' }}</div>
 </div>
+
+{% if is_combined and person_totals %}
+<div class="card" style="margin-bottom:20px;">
+  <h3 style="margin-top:0;">Spend by person</h3>
+  {% for p in person_totals %}
+  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--grid); font-size:14px;">
+    <span>{{ p.name }}</span>
+    <span style="font-variant-numeric: tabular-nums;">${{ "%.2f"|format(p.total) }}</span>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
 
 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap:12px; margin-bottom:28px;">
   <div class="card"><div style="font-size:12px; color:var(--text-secondary); text-transform:uppercase;">Total spend</div><div style="font-size:26px; font-weight:600; margin-top:4px;">${{ "%.2f"|format(total_spend) }}</div></div>

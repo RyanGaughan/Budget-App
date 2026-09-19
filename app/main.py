@@ -10,7 +10,7 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
 from . import db
-from .models import Transaction, UploadLog
+from .models import Transaction, UploadLog, User
 from .parsers.pdf_parser import extract_transactions_from_pdf
 from .parsers.categorize import categorize_description
 from .parsers.recurring import detect_recurring, recurring_summary_stats
@@ -91,15 +91,31 @@ def upload():
 @main_bp.route("/dashboard")
 @login_required
 def dashboard():
-    txns = Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.date).all()
-    if not txns:
-        return render_template("dashboard.html", has_data=False)
+    member_ids = current_user.household_member_ids()
+    is_combined = request.args.get("scope") == "household" and len(member_ids) > 1
 
+    if is_combined:
+        query = Transaction.query.filter(Transaction.user_id.in_(member_ids))
+    else:
+        query = Transaction.query.filter_by(user_id=current_user.id)
+    txns = query.order_by(Transaction.date).all()
+
+    has_household = len(member_ids) > 1
+
+    if not txns:
+        return render_template("dashboard.html", has_data=False, has_household=has_household, is_combined=is_combined)
+
+    owner_names = {u.id: u.username for u in User.query.filter(User.id.in_(member_ids)).all()}
     df = pd.DataFrame([{
         "date": t.date, "description": t.description, "amount": t.amount,
-        "category": t.category, "account": t.account,
+        "category": t.category, "account": t.account, "owner": owner_names.get(t.user_id, "?"),
     } for t in txns])
     df["date"] = pd.to_datetime(df["date"])
+
+    person_totals = []
+    if is_combined:
+        person_spend = df[df["amount"] < 0].groupby("owner")["amount"].sum().abs().sort_values(ascending=False)
+        person_totals = [{"name": n, "total": v} for n, v in person_spend.items()]
 
     spend = df[df["amount"] < 0].copy()
     spend["month"] = spend["date"].dt.to_period("M").astype(str)
@@ -154,6 +170,9 @@ def dashboard():
         series_data=series_data,
         color_map=color_map,
         uncategorized_count=uncategorized_count,
+        has_household=has_household,
+        is_combined=is_combined,
+        person_totals=person_totals,
     )
 
 

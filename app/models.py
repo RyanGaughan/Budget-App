@@ -4,18 +4,39 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 
 
+class Household(db.Model):
+    """
+    A group of users who can view each other's spending combined (e.g. a
+    couple). Each user still has their own separate login and their own
+    uploads stay attributed to them -- a household only affects what the
+    dashboard's "combined" view is allowed to show.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     must_change_password = db.Column(db.Boolean, default=True)
+    household_id = db.Column(db.Integer, db.ForeignKey("household.id"), nullable=True, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    household = db.relationship("Household", backref=db.backref("members", lazy="dynamic"))
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    def household_member_ids(self):
+        """This user's own id, plus everyone else in their household (if any)."""
+        if not self.household_id:
+            return [self.id]
+        return [u.id for u in User.query.filter_by(household_id=self.household_id).all()]
 
 
 class Transaction(db.Model):

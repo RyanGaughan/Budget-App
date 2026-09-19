@@ -31,9 +31,27 @@ DATE_PATTERNS = [
 
 AMOUNT_PATTERN = r"(?P<amount>-?\$?\(?\d{1,3}(?:,\d{3})*\.\d{2}\)?-?)"
 
-# Build a combined line regex: DATE  ...DESCRIPTION...  AMOUNT (end of line)
+# Build a combined line regex: DATE  ...DESCRIPTION...  AMOUNT
+# The amount does NOT have to be the last thing on the line: some statements
+# use a 2-column layout (transaction list beside legal text) that pdfplumber
+# flattens into one line, leaving marginalia text trailing after the amount.
+# We take the first amount-shaped token after the description and ignore
+# anything after it, rather than anchoring to end-of-line.
+# Many statements print TWO dates per line (transaction date + posting date),
+# e.g. "01/07 01/07 STARBUCKS #1234  12.50". If we don't account for the
+# second date, it leaks into the captured description text -- which then
+# breaks merchant-name grouping downstream (recurring-charge detection
+# groups by normalized description, so a stray date prefix that changes
+# every month makes the same merchant look like a different one each time).
+# So: consume an optional second date (bare, non-named copy of the same
+# pattern) right after the first, before capturing the description.
+def _bare(pattern):
+    """Strip the named group so it can be reused as an unnamed second match."""
+    return pattern.replace("?P<date>", "?:")
+
+
 LINE_REGEXES = [
-    re.compile(rf"^\s*{dp}\s+(?P<desc>.+?)\s+{AMOUNT_PATTERN}\s*$")
+    re.compile(rf"^\s*{dp}\s+(?:{_bare(dp)}\s+)?(?P<desc>.+?)\s+{AMOUNT_PATTERN}(?:\s|$)")
     for dp in DATE_PATTERNS
 ]
 
@@ -67,15 +85,26 @@ def _clean_amount(raw):
     return -val if negative else val
 
 
-def _normalize_date(raw, statement_year_hint=None):
-    """Best-effort parse of a variety of date formats found on statements."""
+def _normalize_date(raw, anchor_month=None, anchor_year=None):
+    """
+    Best-effort parse of a variety of date formats found on statements.
+
+    Statement billing periods often span a year boundary (e.g. a "JANUARY"
+    statement covering 12/14 - 01/14). When a date has no explicit year, we
+    anchor it to the statement's closing month/year: if the date's month is
+    LATER than the statement's closing month (e.g. a "12" transaction on a
+    statement that closes in "01"), it belongs to the PREVIOUS year.
+    """
     raw = raw.strip()
     fmts = ["%m/%d/%Y", "%m/%d/%y", "%m/%d", "%m-%d-%Y", "%m-%d-%y", "%m-%d", "%b %d"]
     for fmt in fmts:
         try:
             dt = datetime.strptime(raw, fmt)
             if "%Y" not in fmt and "%y" not in fmt:
-                year = statement_year_hint or datetime.now().year
+                year = anchor_year or datetime.now().year
+                month = anchor_month or dt.month
+                if dt.month > month:
+                    year -= 1
                 dt = dt.replace(year=year)
             return dt.date()
         except ValueError:
@@ -83,12 +112,26 @@ def _normalize_date(raw, statement_year_hint=None):
     return None
 
 
-def _guess_statement_year(text):
-    """Look for a 4-digit year near 'statement' text to anchor dates like '01/15'."""
-    m = re.search(r"(20\d{2})", text)
+def _guess_statement_anchor(text):
+    """
+    Finds the statement's closing date (month, year) to anchor dates that
+    print without a year, e.g. from 'New balance as of 01/14/26' or similar
+    'as of MM/DD/YY(YY)' phrasing. Falls back to the first 4-digit year
+    found, then to today.
+    """
+    m = re.search(r"as of\s+(\d{1,2})/(\d{1,2})/(\d{2,4})", text, re.IGNORECASE)
+    if not m:
+        m = re.search(r"(?:closing|statement)\s+date[:\s]+(\d{1,2})/(\d{1,2})/(\d{2,4})", text, re.IGNORECASE)
     if m:
-        return int(m.group(1))
-    return datetime.now().year
+        month = int(m.group(1))
+        year = int(m.group(3))
+        if year < 100:
+            year += 2000
+        return month, year
+
+    m = re.search(r"(20\d{2})", text)
+    year = int(m.group(1)) if m else datetime.now().year
+    return datetime.now().month, year
 
 
 def extract_transactions_from_pdf(pdf_path, account_name=None):
@@ -103,7 +146,7 @@ def extract_transactions_from_pdf(pdf_path, account_name=None):
 
     with pdfplumber.open(pdf_path) as pdf:
         full_text = "\n".join(page.extract_text() or "" for page in pdf.pages)
-        year_hint = _guess_statement_year(full_text)
+        anchor_month, anchor_year = _guess_statement_anchor(full_text)
 
         for page in pdf.pages:
             text = page.extract_text() or ""
@@ -114,7 +157,7 @@ def extract_transactions_from_pdf(pdf_path, account_name=None):
                 for regex in LINE_REGEXES:
                     m = regex.match(line)
                     if m:
-                        date = _normalize_date(m.group("date"), year_hint)
+                        date = _normalize_date(m.group("date"), anchor_month, anchor_year)
                         amount = _clean_amount(m.group("amount"))
                         desc = m.group("desc").strip()
                         if date and amount is not None and desc:
