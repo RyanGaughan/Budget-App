@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+
+{% if not has_data %}
+<div class="card" style="text-align:center; padding:60px 24px;">
+  <h2>No statements uploaded yet</h2>
+  <p style="color:var(--text-secondary);">Upload your credit card and bank statement PDFs to see your spending breakdown.</p>
+  <a class="btn" href="{{ url_for('main.upload') }}">Upload statements</a>
+</div>
+{% else %}
+
+<div style="margin-bottom:20px;">
+  <div style="font-size:13px; color:var(--text-secondary);">{{ date_range[0] }} to {{ date_range[1] }} · {{ num_months }} months · {{ total_transactions }} transactions</div>
+</div>
+
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap:12px; margin-bottom:28px;">
+  <div class="card"><div style="font-size:12px; color:var(--text-secondary); text-transform:uppercase;">Total spend</div><div style="font-size:26px; font-weight:600; margin-top:4px;">${{ "%.2f"|format(total_spend) }}</div></div>
+  <div class="card"><div style="font-size:12px; color:var(--text-secondary); text-transform:uppercase;">Avg / month</div><div style="font-size:26px; font-weight:600; margin-top:4px;">${{ "%.2f"|format(avg_monthly) }}</div></div>
+  <div class="card"><div style="font-size:12px; color:var(--text-secondary); text-transform:uppercase;">Recurring charges</div><div style="font-size:26px; font-weight:600; margin-top:4px;">{{ rec_stats.num_recurring }}</div></div>
+  <div class="card"><div style="font-size:12px; color:var(--text-secondary); text-transform:uppercase;">Recurring est. / mo</div><div style="font-size:26px; font-weight:600; margin-top:4px;">${{ "%.2f"|format(rec_stats.total_est_monthly) }}</div></div>
+  <div class="card"><div style="font-size:12px; color:var(--text-secondary); text-transform:uppercase;">Price increases</div><div style="font-size:26px; font-weight:600; margin-top:4px; color:{{ 'var(--critical)' if rec_stats.num_price_increases else 'var(--good)' }};">{{ rec_stats.num_price_increases }}</div></div>
+</div>
+
+{% if uncategorized_count > 0 %}
+<div class="flash success" style="display:flex; justify-content:space-between; align-items:center;">
+  <span>{{ uncategorized_count }} transactions are uncategorized.</span>
+  <a href="{{ url_for('main.uncategorized') }}" style="font-weight:600;">Review them →</a>
+</div>
+{% endif %}
+
+<div class="card" style="margin-bottom:28px;">
+  <h3 style="margin-top:0;">Monthly spend by category</h3>
+  <div class="legend" id="legend" style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:10px; font-size:12px; color:var(--text-secondary);"></div>
+  <div style="position:relative;">
+    <div id="chart"></div>
+    <div class="tooltip" id="tooltip" style="position:absolute; background:var(--surface-1); border:1px solid var(--border); border-radius:6px; padding:8px 10px; font-size:12px; pointer-events:none; box-shadow:0 4px 12px rgba(0,0,0,0.15); display:none; z-index:10;"></div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:28px;">
+  <h3 style="margin-top:0;">Recurring charges detected</h3>
+  <table style="width:100%; border-collapse:collapse; font-size:13px;">
+    <thead>
+      <tr style="text-align:left; color:var(--text-secondary); font-size:12px; text-transform:uppercase;">
+        <th style="padding:8px 10px; border-bottom:1px solid var(--grid);">Merchant</th>
+        <th style="padding:8px 10px; border-bottom:1px solid var(--grid);">Cadence</th>
+        <th style="padding:8px 10px; border-bottom:1px solid var(--grid); text-align:right;">Amount</th>
+        <th style="padding:8px 10px; border-bottom:1px solid var(--grid); text-align:right;">Est. Monthly</th>
+        <th style="padding:8px 10px; border-bottom:1px solid var(--grid);">Since</th>
+        <th style="padding:8px 10px; border-bottom:1px solid var(--grid);"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in recurring_rows %}
+      <tr>
+        <td style="padding:8px 10px; border-bottom:1px solid var(--grid);">{{ r.merchant }}</td>
+        <td style="padding:8px 10px; border-bottom:1px solid var(--grid);">{{ r.cadence }}</td>
+        <td style="padding:8px 10px; border-bottom:1px solid var(--grid); text-align:right;">${{ "%.2f"|format(r.last_amount) }}</td>
+        <td style="padding:8px 10px; border-bottom:1px solid var(--grid); text-align:right;">${{ "%.2f"|format(r.est_monthly_cost) }}</td>
+        <td style="padding:8px 10px; border-bottom:1px solid var(--grid);">{{ r.first_date }}</td>
+        <td style="padding:8px 10px; border-bottom:1px solid var(--grid); color:var(--critical); font-weight:600;">{% if r.price_increase_flag %}↑ price increase{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card" style="margin-bottom:28px;">
+  <h3 style="margin-top:0;">Top merchants by total spend</h3>
+  {% for row in top_merchant_rows %}
+  <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+    <div style="width:170px; font-size:12px; color:var(--text-secondary); flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ row.merchant }}</div>
+    <div style="flex:1; background:var(--grid); border-radius:4px; height:18px; overflow:hidden;">
+      <div style="height:100%; border-radius:4px; width:{{ (row.total / max_merchant * 100)|round(1) }}%; background:#2a78d6;"></div>
+    </div>
+    <div style="width:90px; text-align:right; font-size:12px;">${{ "%.2f"|format(row.total) }}</div>
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+const months = {{ months|tojson }};
+const series = {{ series_data|tojson }};
+const colors = {{ color_map|tojson }};
+const cats = Object.keys(series);
+
+const legend = document.getElementById('legend');
+cats.forEach(c => {
+  const el = document.createElement('div');
+  el.style.display = 'flex'; el.style.alignItems = 'center'; el.style.gap = '6px';
+  el.innerHTML = `<span style="width:10px;height:10px;border-radius:2px;background:${colors[c]};display:inline-block;"></span>${c}`;
+  legend.appendChild(el);
+});
+
+const chartEl = document.getElementById('chart');
+const tooltip = document.getElementById('tooltip');
+const W = chartEl.clientWidth || 1000, H = 260;
+const padL = 55, padB = 30, padT = 10, padR = 10;
+const plotW = W - padL - padR, plotH = H - padT - padB;
+
+const totals = months.map((_, i) => cats.reduce((s, c) => s + (series[c][i] || 0), 0));
+const maxTotal = Math.max(...totals, 1);
+const niceMax = Math.ceil(maxTotal / 500) * 500 || 500;
+
+const barW = plotW / months.length * 0.6;
+const gap = plotW / months.length;
+
+let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
+const gridSteps = 4;
+for (let i = 0; i <= gridSteps; i++) {
+  const y = padT + plotH - (plotH * i / gridSteps);
+  const val = niceMax * i / gridSteps;
+  svg += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="var(--grid)" stroke-width="1"/>`;
+  svg += `<text x="${padL-8}" y="${y+4}" text-anchor="end" font-size="11" fill="var(--muted)">$${val.toLocaleString()}</text>`;
+}
+months.forEach((m, i) => {
+  let yOffset = 0;
+  const x = padL + gap * i + (gap - barW) / 2;
+  cats.forEach(c => {
+    const val = series[c][i] || 0;
+    const h = (val / niceMax) * plotH;
+    const y = padT + plotH - yOffset - h;
+    svg += `<rect class="seg" data-month="${m}" data-cat="${c}" data-val="${val.toFixed(2)}" x="${x}" y="${y}" width="${barW}" height="${Math.max(h-1,0)}" fill="${colors[c]}" rx="2"/>`;
+    yOffset += h;
+  });
+  svg += `<text x="${x + barW/2}" y="${H-8}" text-anchor="middle" font-size="11" fill="var(--muted)">${m}</text>`;
+});
+svg += `</svg>`;
+chartEl.innerHTML = svg;
+
+chartEl.querySelectorAll('.seg').forEach(seg => {
+  seg.addEventListener('mousemove', e => {
+    tooltip.style.display = 'block';
+    tooltip.style.left = (e.offsetX + 12) + 'px';
+    tooltip.style.top = (e.offsetY - 10) + 'px';
+    tooltip.innerHTML = `<b>${seg.dataset.cat}</b><br>${seg.dataset.month}: $${Number(seg.dataset.val).toLocaleString(undefined,{minimumFractionDigits:2})}`;
+  });
+  seg.addEventListener('mouseleave', () => tooltip.style.display = 'none');
+});
+</script>
+
+{% endif %}
+{% endblock %}

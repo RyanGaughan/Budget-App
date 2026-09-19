@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Uncategorized transactions{% endblock %}
+{% block content %}
+<div class="card">
+  <h2 style="margin-top:0;">Uncategorized transactions</h2>
+  <p style="color:var(--text-secondary); font-size:14px;">
+    These merchants didn't match any category rule. Send this list back to have rules added for them.
+  </p>
+  <table style="width:100%; border-collapse:collapse; font-size:13px;">
+    <thead>
+      <tr style="text-align:left; color:var(--text-secondary); font-size:12px; text-transform:uppercase;">
+        <th style="padding:8px 10px; border-bottom:1px solid var(--grid);">Description</th>
+        <th style="padding:8px 10px; border-bottom:1px solid var(--grid); text-align:right;">Count</th>
+        <th style="padding:8px 10px; border-bottom:1px solid var(--grid); text-align:right;">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td style="padding:8px 10px; border-bottom:1px solid var(--grid);">{{ row.description }}</td>
+        <td style="padding:8px 10px; border-bottom:1px solid var(--grid); text-align:right;">{{ row.count }}</td>
+        <td style="padding:8px 10px; border-bottom:1px solid var(--grid); text-align:right;">${{ "%.2f"|format(row.total) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Upload statements{% endblock %}
+{% block content %}
+<div class="card" style="max-width:480px;">
+  <h2 style="margin-top:0;">Upload statements</h2>
+  <p style="color:var(--text-secondary); font-size:14px;">
+    Upload credit card or bank statement PDFs. You can select multiple files at once.
+    Re-uploading the same statement won't create duplicate transactions.
+  </p>
+  <form method="POST" enctype="multipart/form-data">
+    <label>Statement PDFs</label>
+    <input type="file" name="statements" accept="application/pdf" multiple required>
+    <label style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+      <input type="checkbox" name="flip_sign" style="width:auto; margin:0;">
+      Charges print as positive numbers on these statements (typical for credit cards)
+    </label>
+    <button type="submit">Upload &amp; process</button>
+  </form>
+</div>
+{% endblock %}
