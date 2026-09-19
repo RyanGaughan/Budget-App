@@ -140,6 +140,19 @@ def dashboard():
     series_data = {cat: monthly_cat[cat].round(2).tolist() for cat in display_cats}
     color_map = {cat: PALETTE[i % len(PALETTE)] for i, cat in enumerate(display_cats)}
 
+    # Monthly cost by category table: lets you see at a glance whether
+    # groceries/dining/etc. ran above their own normal in a given month.
+    category_table = []
+    for cat in display_cats:
+        if cat == "Other":
+            continue
+        values = [round(v, 2) for v in monthly_cat[cat].tolist()]
+        nonzero = [v for v in values if v > 0]
+        avg = round(sum(nonzero) / len(nonzero), 2) if nonzero else 0
+        max_val = max(values) if values else 0
+        category_table.append({"category": cat, "values": values, "avg": avg, "max_val": max_val})
+    category_table.sort(key=lambda r: -r["avg"])
+
     recurring_df = detect_recurring(df)
     rec_stats = recurring_summary_stats(recurring_df)
     recurring_rows = recurring_df[recurring_df["is_recurring"] == True].to_dict("records") if not recurring_df.empty else []  # noqa: E712
@@ -173,6 +186,7 @@ def dashboard():
         has_household=has_household,
         is_combined=is_combined,
         person_totals=person_totals,
+        category_table=category_table,
     )
 
 

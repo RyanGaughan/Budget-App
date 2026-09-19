@@ -58,6 +58,37 @@
 </div>
 
 <div class="card" style="margin-bottom:28px;">
+  <h3 style="margin-top:0;">Monthly cost by category</h3>
+  <div style="font-size:13px; color:var(--text-secondary); margin-bottom:10px;">
+    Each category's spend per month, plus its average. The highest month per category is bolded — an easy way to spot when groceries or eating out ran above normal.
+  </div>
+  <div style="overflow-x:auto;">
+  <table style="width:100%; border-collapse:collapse; font-size:13px;">
+    <thead>
+      <tr style="text-align:left; color:var(--text-secondary); font-size:12px; text-transform:uppercase;">
+        <th style="padding:8px 10px; border-bottom:1px solid var(--grid);">Category</th>
+        {% for m in months %}
+        <th style="padding:8px 10px; border-bottom:1px solid var(--grid); text-align:right;">{{ m }}</th>
+        {% endfor %}
+        <th style="padding:8px 10px; border-bottom:1px solid var(--grid); text-align:right;">Avg</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in category_table %}
+      <tr>
+        <td style="padding:8px 10px; border-bottom:1px solid var(--grid);">{{ row.category }}</td>
+        {% for v in row["values"] %}
+        <td style="padding:8px 10px; border-bottom:1px solid var(--grid); text-align:right; {% if v == row.max_val and v > 0 %}font-weight:700;{% endif %}">${{ "%.0f"|format(v) }}</td>
+        {% endfor %}
+        <td style="padding:8px 10px; border-bottom:1px solid var(--grid); text-align:right; font-weight:600;">${{ "%.0f"|format(row.avg) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:28px;">
   <h3 style="margin-top:0;">Recurring charges detected</h3>
   <table style="width:100%; border-collapse:collapse; font-size:13px;">
     <thead>
