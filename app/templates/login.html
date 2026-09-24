@@ -1,14 +1,16 @@
 {% extends "base.html" %}
-{% block title %}Log in{% endblock %}
+{% block title %}Log in · Gaughan Budget{% endblock %}
 {% block content %}
-<div class="card" style="max-width:380px; margin: 40px auto;">
-  <h2 style="margin-top:0;">Log in</h2>
-  <form method="POST">
+<div class="card" style="max-width:400px; margin: 60px auto; text-align:center;">
+  <div style="width:52px; height:52px; border-radius:14px; background:linear-gradient(135deg, var(--accent), var(--accent-2)); display:flex; align-items:center; justify-content:center; font-size:26px; margin:0 auto 18px; box-shadow: 0 4px 16px -4px rgba(42,95,214,0.5);">💰</div>
+  <h2 style="margin:0 0 4px; font-size:22px;">Welcome back</h2>
+  <p style="color:var(--text-secondary); font-size:14px; margin:0 0 24px;">Log in to see where the money's going.</p>
+  <form method="POST" style="max-width:none; text-align:left;">
     <label>Username</label>
     <input type="text" name="username" required autofocus>
     <label>Password</label>
     <input type="password" name="password" required>
-    <button type="submit">Log in</button>
+    <button type="submit" style="width:100%; margin-top:4px;">Log in</button>
   </form>
 </div>
 {% endblock %}

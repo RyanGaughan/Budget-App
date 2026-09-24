@@ -1,16 +1,19 @@
 {% extends "base.html" %}
-{% block title %}Upload statements{% endblock %}
+{% block title %}Upload statements · Gaughan Budget{% endblock %}
 {% block content %}
-<div class="card" style="max-width:480px;">
-  <h2 style="margin-top:0;">Upload statements</h2>
-  <p style="color:var(--text-secondary); font-size:14px;">
-    Upload credit card or bank statement PDFs. You can select multiple files at once.
+<div class="card" style="max-width:520px;">
+  <div style="display:flex; align-items:center; gap:12px; margin-bottom:6px;">
+    <div style="width:40px; height:40px; border-radius:11px; background:var(--accent-soft); display:flex; align-items:center; justify-content:center; font-size:19px; flex-shrink:0;">📄</div>
+    <h2 style="margin:0; font-size:20px;">Upload statements</h2>
+  </div>
+  <p style="color:var(--text-secondary); font-size:14px; margin-bottom:22px;">
+    Upload credit card or bank statement PDFs — select multiple files at once.
     Re-uploading the same statement won't create duplicate transactions.
   </p>
-  <form method="POST" enctype="multipart/form-data">
+  <form method="POST" enctype="multipart/form-data" style="max-width:none;">
     <label>Statement PDFs</label>
     <input type="file" name="statements" accept="application/pdf" multiple required>
-    <label style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+    <label style="display:flex; align-items:center; gap:8px; margin-bottom:20px; font-weight:400;">
       <input type="checkbox" name="flip_sign" style="width:auto; margin:0;">
       Charges print as positive numbers on these statements (typical for credit cards)
     </label>

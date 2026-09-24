@@ -3,57 +3,104 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{% block title %}Budget App{% endblock %}</title>
+<title>{% block title %}Gaughan Budget{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
     color-scheme: light;
-    --surface-1: #fcfcfb; --page: #f9f9f7;
-    --text-primary: #0b0b0b; --text-secondary: #52514e; --muted: #898781;
-    --grid: #e1e0d9; --border: rgba(11,11,11,0.10);
-    --good: #0ca30c; --critical: #d03b3b; --accent: #2a78d6;
+    --surface-1: #ffffff; --surface-2: #f6f5f2; --page: #f7f6f3;
+    --text-primary: #14140f; --text-secondary: #5c5a52; --muted: #8f8c82;
+    --grid: #e8e6e0; --border: rgba(20,20,15,0.08);
+    --good: #0ca34f; --critical: #d0453b;
+    --accent: #2a5fd6; --accent-2: #7b3ae8; --accent-soft: #eef2ff;
+    --shadow: 0 1px 2px rgba(20,20,15,0.04), 0 8px 24px -12px rgba(20,20,15,0.12);
+    --shadow-hover: 0 2px 4px rgba(20,20,15,0.06), 0 16px 32px -14px rgba(20,20,15,0.18);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       color-scheme: dark;
-      --surface-1: #1a1a19; --page: #0d0d0d;
-      --text-primary: #ffffff; --text-secondary: #c3c2b7; --muted: #898781;
-      --grid: #2c2c2a; --border: rgba(255,255,255,0.10);
-      --good: #0ca30c; --critical: #e66767; --accent: #3987e5;
+      --surface-1: #1c1c19; --surface-2: #222220; --page: #121210;
+      --text-primary: #f7f6f3; --text-secondary: #c3c1b8; --muted: #8f8c82;
+      --grid: #33322d; --border: rgba(255,255,255,0.09);
+      --good: #35c97a; --critical: #ef7a72;
+      --accent: #6d93ff; --accent-2: #a888ff; --accent-soft: #23273a;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+      --shadow-hover: 0 2px 4px rgba(0,0,0,0.35), 0 16px 32px -14px rgba(0,0,0,0.6);
     }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--page); color: var(--text-primary); }
-  .topbar { display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; border-bottom: 1px solid var(--border); background: var(--surface-1); }
-  .topbar a { color: var(--text-primary); text-decoration: none; font-weight: 600; }
-  .topbar nav a { margin-left: 16px; font-weight: 400; color: var(--text-secondary); font-size: 14px; }
-  .wrap { max-width: 1080px; margin: 0 auto; padding: 28px 20px 80px; }
-  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 24px; }
-  .flash { padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; font-size: 14px; }
-  .flash.error { background: #fbe4e4; color: #7a1f1f; }
-  .flash.success { background: #e3f3e3; color: #1e5c1e; }
+  body {
+    margin: 0; font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page); color: var(--text-primary); -webkit-font-smoothing: antialiased;
+  }
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center; padding: 14px 28px;
+    border-bottom: 1px solid var(--border); background: var(--surface-1);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .brand-mark {
+    width: 30px; height: 30px; border-radius: 9px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; flex-shrink: 0; box-shadow: 0 2px 8px -2px rgba(42,95,214,0.5);
+  }
+  .brand-name { color: var(--text-primary); font-weight: 800; font-size: 16px; letter-spacing: -0.01em; }
+  .topbar nav { display: flex; align-items: center; gap: 4px; }
+  .topbar nav a {
+    font-weight: 500; color: var(--text-secondary); font-size: 14px; text-decoration: none;
+    padding: 7px 12px; border-radius: 7px; transition: background 0.15s, color 0.15s;
+  }
+  .topbar nav a:hover { background: var(--surface-2); color: var(--text-primary); }
+  .topbar .whoami {
+    color: var(--muted); font-size: 13px; margin-right: 6px; padding: 6px 10px;
+    background: var(--surface-2); border-radius: 20px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 32px 20px 90px; }
+  .card {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px;
+    padding: 24px; box-shadow: var(--shadow); transition: box-shadow 0.2s;
+  }
+  .flash { padding: 11px 16px; border-radius: 10px; margin-bottom: 12px; font-size: 14px; font-weight: 500; }
+  .flash.error { background: #fdeceb; color: #96271e; }
+  .flash.success { background: #e6f7ed; color: #0d6b3a; }
   @media (prefers-color-scheme: dark) {
-    .flash.error { background: #3a1e1e; color: #f3aaaa; }
-    .flash.success { background: #1e2f1e; color: #a8e0a8; }
+    .flash.error { background: #3a1e1c; color: #f3aaaa; }
+    .flash.success { background: #16301f; color: #8fe0b3; }
   }
   input[type=text], input[type=password], input[type=file] {
-    width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
-    background: var(--page); color: var(--text-primary); font-size: 14px; margin-bottom: 14px;
+    width: 100%; padding: 11px 13px; border: 1px solid var(--border); border-radius: 9px;
+    background: var(--surface-2); color: var(--text-primary); font-size: 14px; margin-bottom: 14px;
+    font-family: inherit; transition: border-color 0.15s, box-shadow 0.15s;
   }
-  label { font-size: 13px; color: var(--text-secondary); display: block; margin-bottom: 4px; }
+  input[type=text]:focus, input[type=password]:focus {
+    outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
+    background: var(--surface-1);
+  }
+  label { font-size: 13px; color: var(--text-secondary); font-weight: 500; display: block; margin-bottom: 5px; }
   button, .btn {
-    background: var(--accent); color: white; border: none; padding: 10px 18px;
-    border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: white; border: none;
+    padding: 11px 20px; border-radius: 9px; font-size: 14px; font-weight: 600; cursor: pointer;
+    text-decoration: none; display: inline-block; font-family: inherit;
+    box-shadow: 0 2px 8px -2px rgba(42,95,214,0.45); transition: transform 0.1s, box-shadow 0.15s, opacity 0.15s;
   }
-  button:hover, .btn:hover { opacity: 0.9; }
+  button:hover, .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px -2px rgba(42,95,214,0.55); }
+  button:active, .btn:active { transform: translateY(0); }
+  h1, h2, h3 { letter-spacing: -0.01em; }
   form { max-width: 380px; }
 </style>
 </head>
 <body>
 <div class="topbar">
-  <a href="{{ url_for('main.dashboard') if current_user.is_authenticated else url_for('auth.login') }}">Budget App</a>
+  <a class="brand" href="{{ url_for('main.dashboard') if current_user.is_authenticated else url_for('auth.login') }}">
+    <span class="brand-mark">💰</span>
+    <span class="brand-name">Gaughan Budget</span>
+  </a>
   {% if current_user.is_authenticated %}
   <nav>
-    <span style="color: var(--text-secondary); font-size: 14px;">{{ current_user.username }}</span>
+    <span class="whoami">{{ current_user.username }}</span>
     <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
     <a href="{{ url_for('main.upload') }}">Upload</a>
     <a href="{{ url_for('auth.logout') }}">Log out</a>
