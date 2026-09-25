@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Recurring · Gaughan Budget{% endblock %}
+{% block content %}
+<style>
+  .section-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; padding: 24px; box-shadow: var(--shadow); margin-bottom: 20px; }
+  .section-title { display: flex; align-items: center; gap: 10px; margin: 0 0 4px; font-size: 17px; }
+  .section-title .ico { width: 30px; height: 30px; border-radius: 9px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .section-desc { color: var(--text-secondary); font-size: 13.5px; margin: 0 0 18px; }
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .stat-tile { background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; box-shadow: var(--shadow); }
+  .stat-label { font-size: 12px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+  .stat-value { font-size: 21px; font-weight: 800; margin-top: 4px; }
+  .row-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--grid); }
+  .row-item:last-child { border-bottom: none; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+  .row-main { flex: 1; min-width: 0; }
+  .row-name { font-weight: 600; font-size: 14px; }
+  .row-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .row-amt { text-align: right; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+  .badge { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; padding: 2px 7px; border-radius: 20px; background: var(--accent-soft); color: var(--accent); margin-left: 6px; }
+  .empty-cta { text-align: center; padding: 50px 20px; }
+</style>
+
+{% if not has_data %}
+  <div class="section-card empty-cta">
+    <div style="font-size:34px; margin-bottom:10px;">🔁</div>
+    <h2 style="margin:0 0 8px;">No recurring charges yet</h2>
+    <p style="color:var(--text-secondary); margin:0 0 18px;">Upload some statements first and this page will pick out your subscriptions and bills automatically.</p>
+    <a class="btn" href="{{ url_for('main.statements') }}">Upload a statement</a>
+  </div>
+{% else %}
+
+<div class="stat-grid">
+  <div class="stat-tile">
+    <div class="stat-label">Recurring charges</div>
+    <div class="stat-value">{{ rec_stats.num_recurring }}</div>
+  </div>
+  <div class="stat-tile">
+    <div class="stat-label">Est. cost / month</div>
+    <div class="stat-value">${{ "%.0f"|format(rec_stats.total_est_monthly) }}</div>
+  </div>
+  <div class="stat-tile">
+    <div class="stat-label">Est. cost / year</div>
+    <div class="stat-value">${{ "{:,.0f}".format(annual_total) }}</div>
+  </div>
+  <div class="stat-tile">
+    <div class="stat-label">Price increases</div>
+    <div class="stat-value" style="color: {{ 'var(--critical)' if rec_stats.num_price_increases else 'inherit' }};">{{ rec_stats.num_price_increases }}</div>
+  </div>
+</div>
+
+<div class="section-card">
+  <h2 class="section-title"><span class="ico">🔁</span>All recurring charges</h2>
+  <p class="section-desc">Detected from repeating amounts and dates across your statements.</p>
+  {% if rows %}
+  {% for r in rows %}
+  <div class="row-item">
+    <div class="avatar">{{ r.merchant[:2]|upper }}</div>
+    <div class="row-main">
+      <div class="row-name">{{ r.merchant }}{% if r.price_increase_flag %}<span class="badge">Price ↑</span>{% endif %}</div>
+      <div class="row-sub">{{ r.cadence }} · last charged {{ r.last_date }}</div>
+    </div>
+    <div class="row-amt">${{ "%.2f"|format(r.last_amount) }}</div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <p style="color:var(--muted);">Nothing recurring detected yet — need at least two occurrences of a charge to spot a pattern.</p>
+  {% endif %}
+</div>
+
+{% endif %}
+{% endblock %}

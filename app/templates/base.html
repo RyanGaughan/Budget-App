@@ -13,10 +13,11 @@
     --surface-1: #ffffff; --surface-2: #f6f5f2; --page: #f7f6f3;
     --text-primary: #14140f; --text-secondary: #5c5a52; --muted: #8f8c82;
     --grid: #e8e6e0; --border: rgba(20,20,15,0.08);
-    --good: #0ca34f; --critical: #d0453b;
+    --good: #0ca34f; --good-soft: #e6f7ed; --critical: #d0453b; --critical-soft: #fdeceb;
     --accent: #2a5fd6; --accent-2: #7b3ae8; --accent-soft: #eef2ff;
     --shadow: 0 1px 2px rgba(20,20,15,0.04), 0 8px 24px -12px rgba(20,20,15,0.12);
     --shadow-hover: 0 2px 4px rgba(20,20,15,0.06), 0 16px 32px -14px rgba(20,20,15,0.18);
+    --sidebar-w: 216px;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -24,7 +25,7 @@
       --surface-1: #1c1c19; --surface-2: #222220; --page: #121210;
       --text-primary: #f7f6f3; --text-secondary: #c3c1b8; --muted: #8f8c82;
       --grid: #33322d; --border: rgba(255,255,255,0.09);
-      --good: #35c97a; --critical: #ef7a72;
+      --good: #35c97a; --good-soft: #16301f; --critical: #ef7a72; --critical-soft: #3a1e1c;
       --accent: #6d93ff; --accent-2: #a888ff; --accent-soft: #23273a;
       --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
       --shadow-hover: 0 2px 4px rgba(0,0,0,0.35), 0 16px 32px -14px rgba(0,0,0,0.6);
@@ -35,47 +36,77 @@
     margin: 0; font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
     background: var(--page); color: var(--text-primary); -webkit-font-smoothing: antialiased;
   }
-  .topbar {
-    display: flex; justify-content: space-between; align-items: center; padding: 14px 28px;
-    border-bottom: 1px solid var(--border); background: var(--surface-1);
-    position: sticky; top: 0; z-index: 10;
+  a { color: inherit; }
+
+  /* ---- Sidebar (desktop) ---- */
+  .app-shell { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: var(--sidebar-w); flex-shrink: 0; background: var(--surface-1);
+    border-right: 1px solid var(--border); display: flex; flex-direction: column;
+    position: sticky; top: 0; height: 100vh;
   }
-  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; padding: 18px 16px 14px; }
   .brand-mark {
     width: 30px; height: 30px; border-radius: 9px;
     background: linear-gradient(135deg, var(--accent), var(--accent-2));
     display: flex; align-items: center; justify-content: center;
     font-size: 15px; flex-shrink: 0; box-shadow: 0 2px 8px -2px rgba(42,95,214,0.5);
   }
-  .brand-name { color: var(--text-primary); font-weight: 800; font-size: 16px; letter-spacing: -0.01em; }
-  .topbar nav { display: flex; align-items: center; gap: 4px; }
-  .topbar nav a {
-    font-weight: 500; color: var(--text-secondary); font-size: 14px; text-decoration: none;
-    padding: 7px 12px; border-radius: 7px; transition: background 0.15s, color 0.15s;
+  .brand-name { color: var(--text-primary); font-weight: 800; font-size: 15.5px; letter-spacing: -0.01em; }
+  .sidenav { flex: 1; padding: 6px 10px; display: flex; flex-direction: column; gap: 2px; }
+  .sidenav a {
+    display: flex; align-items: center; gap: 10px; font-weight: 500; color: var(--text-secondary);
+    font-size: 14px; text-decoration: none; padding: 9px 12px; border-radius: 9px;
+    transition: background 0.15s, color 0.15s;
   }
-  .topbar nav a:hover { background: var(--surface-2); color: var(--text-primary); }
-  .topbar .whoami {
-    color: var(--muted); font-size: 13px; margin-right: 6px; padding: 6px 10px;
-    background: var(--surface-2); border-radius: 20px;
+  .sidenav a .ico { font-size: 16px; width: 18px; text-align: center; flex-shrink: 0; }
+  .sidenav a:hover { background: var(--surface-2); color: var(--text-primary); }
+  .sidenav a.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .sidebar-foot { padding: 12px; border-top: 1px solid var(--border); }
+  .whoami-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 6px 10px; }
+  .whoami { color: var(--text-secondary); font-size: 13px; font-weight: 600; }
+  .logout-link { color: var(--muted); font-size: 12.5px; text-decoration: none; }
+  .logout-link:hover { color: var(--text-primary); }
+
+  /* ---- Mobile topbar ---- */
+  .mobile-topbar { display: none; }
+  @media (max-width: 880px) {
+    .app-shell { flex-direction: column; }
+    .sidebar { display: none; }
+    .mobile-topbar {
+      display: flex; align-items: center; justify-content: space-between; padding: 12px 16px;
+      background: var(--surface-1); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 20;
+    }
+    .mobile-nav {
+      display: flex; overflow-x: auto; gap: 4px; padding: 8px 10px; background: var(--surface-1);
+      border-bottom: 1px solid var(--border); position: sticky; top: 53px; z-index: 19;
+    }
+    .mobile-nav a {
+      flex-shrink: 0; font-size: 13px; font-weight: 500; color: var(--text-secondary); text-decoration: none;
+      padding: 7px 12px; border-radius: 20px; background: var(--surface-2); white-space: nowrap;
+    }
+    .mobile-nav a.active { background: var(--accent); color: white; }
   }
-  .wrap { max-width: 1080px; margin: 0 auto; padding: 32px 20px 90px; }
+
+  .main-col { flex: 1; min-width: 0; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 32px 24px 90px; }
   .card {
     background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px;
     padding: 24px; box-shadow: var(--shadow); transition: box-shadow 0.2s;
   }
   .flash { padding: 11px 16px; border-radius: 10px; margin-bottom: 12px; font-size: 14px; font-weight: 500; }
-  .flash.error { background: #fdeceb; color: #96271e; }
-  .flash.success { background: #e6f7ed; color: #0d6b3a; }
+  .flash.error { background: var(--critical-soft); color: #96271e; }
+  .flash.success { background: var(--good-soft); color: #0d6b3a; }
   @media (prefers-color-scheme: dark) {
-    .flash.error { background: #3a1e1c; color: #f3aaaa; }
-    .flash.success { background: #16301f; color: #8fe0b3; }
+    .flash.error { color: #f3aaaa; }
+    .flash.success { color: #8fe0b3; }
   }
-  input[type=text], input[type=password], input[type=file] {
+  input[type=text], input[type=password], input[type=number], input[type=file], select {
     width: 100%; padding: 11px 13px; border: 1px solid var(--border); border-radius: 9px;
     background: var(--surface-2); color: var(--text-primary); font-size: 14px; margin-bottom: 14px;
     font-family: inherit; transition: border-color 0.15s, box-shadow 0.15s;
   }
-  input[type=text]:focus, input[type=password]:focus {
+  input:focus, select:focus {
     outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
     background: var(--surface-1);
   }
@@ -88,34 +119,75 @@
   }
   button:hover, .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px -2px rgba(42,95,214,0.55); }
   button:active, .btn:active { transform: translateY(0); }
+  .btn-ghost {
+    background: var(--surface-2); color: var(--text-primary); box-shadow: none; border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { box-shadow: none; background: var(--grid); }
+  .btn-danger { background: var(--critical-soft); color: var(--critical); box-shadow: none; }
+  .btn-danger:hover { box-shadow: none; opacity: 0.85; }
+  .btn-sm { padding: 6px 12px; font-size: 12.5px; border-radius: 7px; }
   h1, h2, h3 { letter-spacing: -0.01em; }
-  form { max-width: 380px; }
+  form.inline-form { max-width: none; margin: 0; display: inline; }
 </style>
 </head>
 <body>
-<div class="topbar">
-  <a class="brand" href="{{ url_for('main.dashboard') if current_user.is_authenticated else url_for('auth.login') }}">
-    <span class="brand-mark">💰</span>
-    <span class="brand-name">Gaughan Budget</span>
-  </a>
+{% set nav_items = [
+  ('main.dashboard', 'Overview', '📊'),
+  ('main.recurring', 'Recurring', '🔁'),
+  ('main.transactions', 'Transactions', '🧾'),
+  ('main.statements', 'Statements', '📄'),
+  ('main.budget', 'Budget', '🧮'),
+] %}
+<div class="app-shell">
   {% if current_user.is_authenticated %}
-  <nav>
+  <div class="mobile-topbar">
+    <a class="brand" href="{{ url_for('main.dashboard') }}" style="padding:0;">
+      <span class="brand-mark">💰</span><span class="brand-name">Gaughan Budget</span>
+    </a>
     <span class="whoami">{{ current_user.username }}</span>
-    <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
-    <a href="{{ url_for('main.upload') }}">Upload</a>
+  </div>
+  <div class="mobile-nav">
+    {% for endpoint, label, icon in nav_items %}
+      <a href="{{ url_for(endpoint) }}" class="{{ 'active' if request.endpoint == endpoint else '' }}">{{ icon }} {{ label }}</a>
+    {% endfor %}
     <a href="{{ url_for('auth.logout') }}">Log out</a>
-  </nav>
+  </div>
   {% endif %}
-</div>
-<div class="wrap">
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      {% for category, message in messages %}
-        <div class="flash {{ category }}">{{ message }}</div>
+
+  {% if current_user.is_authenticated %}
+  <div class="sidebar">
+    <a class="brand" href="{{ url_for('main.dashboard') }}">
+      <span class="brand-mark">💰</span>
+      <span class="brand-name">Gaughan Budget</span>
+    </a>
+    <nav class="sidenav">
+      {% for endpoint, label, icon in nav_items %}
+        <a href="{{ url_for(endpoint) }}" class="{{ 'active' if request.endpoint == endpoint else '' }}">
+          <span class="ico">{{ icon }}</span>{{ label }}
+        </a>
       {% endfor %}
-    {% endif %}
-  {% endwith %}
-  {% block content %}{% endblock %}
+    </nav>
+    <div class="sidebar-foot">
+      <div class="whoami-row">
+        <span class="whoami">{{ current_user.username }}</span>
+        <a class="logout-link" href="{{ url_for('auth.logout') }}">Log out</a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="main-col">
+    <div class="wrap">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </div>
+  </div>
 </div>
 </body>
 </html>

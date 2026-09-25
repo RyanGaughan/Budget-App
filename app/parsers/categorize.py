@@ -96,12 +96,24 @@ _COMPILED_RULES = {
 }
 
 
-def categorize_description(description):
+def categorize_description(description, overrides=None):
+    """overrides: optional dict of {description: category} from the user's
+    own manual corrections -- checked first so a manual fix always wins."""
+    if overrides and description in overrides:
+        return overrides[description]
     for category, patterns in _COMPILED_RULES.items():
         for pattern in patterns:
             if pattern.search(description):
                 return category
     return "Uncategorized"
+
+
+# Categories that are inherently irregular/occasional rather than everyday --
+# used to flag "this isn't a monthly habit" spend (a trip, a one-off repair)
+# separately from consistent day-to-day categories like Groceries or Dining.
+IRREGULAR_CATEGORIES = {"Travel", "Shopping", "Entertainment", "Fees & Interest"}
+
+ALL_CATEGORIES = list(CATEGORY_RULES.keys()) + ["Uncategorized"]
 
 
 def categorize_dataframe(df, description_col="description"):

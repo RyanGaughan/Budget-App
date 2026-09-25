@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Budget · Gaughan Budget{% endblock %}
+{% block content %}
+<style>
+  .section-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; padding: 24px; box-shadow: var(--shadow); margin-bottom: 20px; }
+  .section-title { display: flex; align-items: center; gap: 10px; margin: 0 0 4px; font-size: 17px; }
+  .section-title .ico { width: 30px; height: 30px; border-radius: 9px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .section-desc { color: var(--text-secondary); font-size: 13.5px; margin: 0 0 18px; }
+  .row-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--grid); flex-wrap: wrap; }
+  .row-item:last-child { border-bottom: none; }
+  .row-main { flex: 1 1 160px; min-width: 120px; }
+  .row-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; text-transform: capitalize; }
+  .row-amt { font-weight: 700; font-size: 14px; flex-shrink: 0; margin-left: auto; }
+  .add-form-grid { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; align-items: end; max-width: 640px; }
+  .add-form-grid label { margin-bottom: 4px; }
+  .add-form-grid input, .add-form-grid select { margin-bottom: 0; }
+  .empty-note { color: var(--muted); font-size: 13.5px; padding: 8px 0; }
+  .total-line { display: flex; justify-content: space-between; padding-top: 12px; margin-top: 4px; font-weight: 700; }
+  @media (max-width: 700px) { .add-form-grid { grid-template-columns: 1fr; } }
+</style>
+
+<div class="section-card">
+  <h2 class="section-title"><span class="ico">💵</span>Income</h2>
+  <p class="section-desc">Your paychecks or other regular income sources.</p>
+  {% if incomes %}
+  {% for i in incomes %}
+  <div class="row-item">
+    <div class="row-main">
+      <div class="row-name">{{ i.name }}</div>
+      <div class="row-sub">{{ i.frequency }} · ${{ "%.2f"|format(i.amount) }}</div>
+    </div>
+    <div class="row-amt">${{ "%.0f"|format(i.monthly_amount) }}/mo</div>
+    <form class="inline-form" method="POST" action="{{ url_for('main.delete_income', income_id=i.id) }}">
+      <button type="submit" class="btn-danger btn-sm">Remove</button>
+    </form>
+  </div>
+  {% endfor %}
+  <div class="total-line"><span>Total income</span><span>${{ "%.0f"|format(income_monthly) }}/mo</span></div>
+  {% else %}
+  <p class="empty-note">No income sources added yet.</p>
+  {% endif %}
+
+  <form method="POST" action="{{ url_for('main.add_income') }}" style="margin-top:18px; max-width:none;">
+    <div class="add-form-grid">
+      <div><label>Source</label><input type="text" name="name" placeholder="e.g. Ryan's paycheck" required></div>
+      <div><label>Amount</label><input type="text" inputmode="decimal" name="amount" placeholder="0.00" required></div>
+      <div>
+        <label>How often</label>
+        <select name="frequency">
+          {% for f in frequencies %}<option value="{{ f }}" {{ 'selected' if f == 'biweekly' else '' }}>{{ f }}</option>{% endfor %}
+        </select>
+      </div>
+      <div><button type="submit">Add</button></div>
+    </div>
+  </form>
+</div>
+
+<div class="section-card">
+  <h2 class="section-title"><span class="ico">🏠</span>Fixed costs</h2>
+  <p class="section-desc">Bills that are the same (or close to it) every period — rent, car payment, insurance — separate from day-to-day variable spending.</p>
+  {% if fixed_costs %}
+  {% for f in fixed_costs %}
+  <div class="row-item">
+    <div class="row-main">
+      <div class="row-name">{{ f.name }}</div>
+      <div class="row-sub">{{ f.frequency }} · ${{ "%.2f"|format(f.amount) }}</div>
+    </div>
+    <div class="row-amt">${{ "%.0f"|format(f.monthly_amount) }}/mo</div>
+    <form class="inline-form" method="POST" action="{{ url_for('main.delete_fixed', fixed_id=f.id) }}">
+      <button type="submit" class="btn-danger btn-sm">Remove</button>
+    </form>
+  </div>
+  {% endfor %}
+  <div class="total-line"><span>Total fixed costs</span><span>${{ "%.0f"|format(fixed_monthly) }}/mo</span></div>
+  {% else %}
+  <p class="empty-note">No fixed costs added yet.</p>
+  {% endif %}
+
+  <form method="POST" action="{{ url_for('main.add_fixed') }}" style="margin-top:18px; max-width:none;">
+    <div class="add-form-grid">
+      <div><label>Bill</label><input type="text" name="name" placeholder="e.g. Rent" required></div>
+      <div><label>Amount</label><input type="text" inputmode="decimal" name="amount" placeholder="0.00" required></div>
+      <div>
+        <label>How often</label>
+        <select name="frequency">
+          {% for f in frequencies %}<option value="{{ f }}" {{ 'selected' if f == 'monthly' else '' }}>{{ f }}</option>{% endfor %}
+        </select>
+      </div>
+      <div><button type="submit">Add</button></div>
+    </div>
+  </form>
+</div>
+
+<div class="section-card">
+  <a class="btn btn-ghost" href="{{ url_for('main.dashboard') }}">← Back to Overview</a>
+</div>
+{% endblock %}

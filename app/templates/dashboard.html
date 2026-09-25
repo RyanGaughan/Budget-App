@@ -1,31 +1,50 @@
 {% extends "base.html" %}
-{% block title %}Dashboard · Gaughan Budget{% endblock %}
+{% block title %}Overview · Gaughan Budget{% endblock %}
 {% block content %}
-
 <style>
-  .stat-tile { display:flex; flex-direction:column; gap:6px; }
-  .stat-icon { width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; margin-bottom:4px; }
-  .stat-label { font-size:12px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.04em; font-weight:600; }
-  .stat-value { font-size:26px; font-weight:700; letter-spacing:-0.02em; }
-  .section-card { margin-bottom:24px; }
-  .section-title { display:flex; align-items:center; gap:10px; margin:0 0 16px; font-size:16px; }
-  .section-title .ico { width:30px; height:30px; border-radius:9px; background:var(--accent-soft); display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
-  table.pretty { width:100%; border-collapse:collapse; font-size:13px; }
-  table.pretty th { text-align:left; color:var(--text-secondary); font-size:11px; text-transform:uppercase; letter-spacing:0.03em; font-weight:600; padding:8px 10px; border-bottom:1px solid var(--grid); }
-  table.pretty td { padding:10px 10px; border-bottom:1px solid var(--grid); }
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 22px; }
+  .stat-tile { background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; box-shadow: var(--shadow); }
+  .stat-icon { width: 34px; height: 34px; border-radius: 10px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-size: 16px; margin-bottom: 10px; }
+  .stat-label { font-size: 12.5px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+  .stat-value { font-size: 24px; font-weight: 800; margin-top: 4px; letter-spacing: -0.02em; }
+  .stat-sub { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+  .stat-sub.up { color: var(--critical); }
+  .stat-sub.down { color: var(--good); }
+  .stat-sub a { color: var(--accent); font-weight: 600; }
+  .section-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; padding: 24px; box-shadow: var(--shadow); margin-bottom: 20px; }
+  .section-title { display: flex; align-items: center; gap: 10px; margin: 0 0 4px; font-size: 17px; }
+  .section-title .ico { width: 30px; height: 30px; border-radius: 9px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .section-desc { color: var(--text-secondary); font-size: 13.5px; margin: 0 0 18px; }
+  table.pretty { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.pretty th { text-align: left; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--grid); }
+  table.pretty td { padding: 10px 10px; border-bottom: 1px solid var(--grid); }
   table.pretty tbody tr:hover { background: var(--surface-2); }
-  .toggle-group { display:inline-flex; background:var(--surface-2); padding:4px; border-radius:11px; margin-bottom:20px; gap:2px; }
-  .toggle-group a {
-    padding:8px 16px; border-radius:8px; font-size:14px; font-weight:600; text-decoration:none;
-    color:var(--text-secondary); transition: background 0.15s, color 0.15s;
-  }
-  .toggle-group a.active { background:var(--surface-1); color:var(--text-primary); box-shadow: var(--shadow); }
-  .bar-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
-  .bar-label { width:180px; font-size:12px; color:var(--text-secondary); flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .bar-track { flex:1; background:var(--grid); border-radius:6px; height:20px; overflow:hidden; }
-  .bar-fill { height:100%; border-radius:6px; background:linear-gradient(90deg, var(--accent), var(--accent-2)); }
-  .bar-value { width:90px; text-align:right; font-size:12px; font-weight:600; font-variant-numeric: tabular-nums; }
+  .badge { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; padding: 2px 7px; border-radius: 20px; white-space: nowrap; }
+  .badge.consistent { background: var(--good-soft); color: var(--good); }
+  .badge.irregular { background: var(--accent-soft); color: var(--accent); }
+  .bar-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+  .bar-name { width: 150px; flex-shrink: 0; font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-track { flex: 1; height: 8px; background: var(--surface-2); border-radius: 6px; overflow: hidden; }
+  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius: 6px; }
+  .bar-amt { width: 78px; text-align: right; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+  .toggle-group { display: inline-flex; background: var(--surface-2); border-radius: 10px; padding: 3px; margin-bottom: 20px; }
+  .toggle-group a { padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; color: var(--text-secondary); }
+  .toggle-group a.active { background: var(--surface-1); color: var(--accent); box-shadow: var(--shadow); }
+  .insight-row { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--grid); font-size: 14px; }
+  .insight-row:last-child { border-bottom: none; }
+  .insight-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-top: 6px; flex-shrink: 0; }
+  .empty-cta { text-align: center; padding: 50px 20px; }
+  @media (max-width: 560px) { .bar-name { width: 96px; } }
 </style>
+
+{% if not has_data %}
+  <div class="section-card empty-cta">
+    <div style="font-size:34px; margin-bottom:10px;">📄</div>
+    <h2 style="margin:0 0 8px;">No statements yet</h2>
+    <p style="color:var(--text-secondary); margin:0 0 18px;">Upload a credit card or bank statement PDF to see your spending here.</p>
+    <a class="btn" href="{{ url_for('main.statements') }}">Upload a statement</a>
+  </div>
+{% else %}
 
 {% if has_household %}
 <div class="toggle-group">
@@ -34,99 +53,104 @@
 </div>
 {% endif %}
 
-{% if not has_data %}
-<div class="card" style="text-align:center; padding:64px 24px;">
-  <div style="font-size:38px; margin-bottom:12px;">📊</div>
-  <h2 style="margin:0 0 6px;">No statements{{ ' between you' if is_combined else '' }} uploaded yet</h2>
-  <p style="color:var(--text-secondary); margin-bottom:22px;">Upload credit card and bank statement PDFs to see a spending breakdown.</p>
-  <a class="btn" href="{{ url_for('main.upload') }}">Upload statements</a>
+<div class="stat-grid">
+  <div class="stat-tile">
+    <div class="stat-icon">💵</div>
+    <div class="stat-label">Income / mo</div>
+    <div class="stat-value">${{ "%.0f"|format(income_monthly) }}</div>
+    <div class="stat-sub">{% if not has_budget_setup %}<a href="{{ url_for('main.budget') }}">Set this up →</a>{% else %}<a href="{{ url_for('main.budget') }}">edit</a>{% endif %}</div>
+  </div>
+  <div class="stat-tile">
+    <div class="stat-icon">🏠</div>
+    <div class="stat-label">Fixed costs / mo</div>
+    <div class="stat-value">${{ "%.0f"|format(fixed_monthly) }}</div>
+    <div class="stat-sub">rent, insurance, etc.</div>
+  </div>
+  <div class="stat-tile">
+    <div class="stat-icon">💳</div>
+    <div class="stat-label">Avg variable spend / mo</div>
+    <div class="stat-value">${{ "%.0f"|format(avg_monthly) }}</div>
+    <div class="stat-sub">from {{ num_months }} month(s) of statements</div>
+  </div>
+  <div class="stat-tile">
+    <div class="stat-icon">{{ '✅' if leftover_monthly >= 0 else '⚠️' }}</div>
+    <div class="stat-label">Left over / mo</div>
+    <div class="stat-value" style="color: {{ 'var(--good)' if leftover_monthly >= 0 else 'var(--critical)' }};">${{ "%.0f"|format(leftover_monthly) }}</div>
+    <div class="stat-sub">income − fixed − variable</div>
+  </div>
+  <div class="stat-tile">
+    <div class="stat-icon">📈</div>
+    <div class="stat-label">Net worth</div>
+    {% if has_net_worth_setup %}
+      <div class="stat-value">${{ "{:,.0f}".format(net_worth) }}</div>
+      <div class="stat-sub">${{ "{:,.0f}".format(assets) }} assets − ${{ "{:,.0f}".format(liabilities) }} owed</div>
+    {% else %}
+      <div class="stat-value" style="font-size:15px; color:var(--muted); font-weight:600;">Not set up</div>
+      <div class="stat-sub"><a href="{{ url_for('main.statements') }}">Add account balances →</a></div>
+    {% endif %}
+  </div>
 </div>
-{% else %}
 
-<div style="margin-bottom:22px;">
-  <div style="font-size:13px; color:var(--text-secondary);">{{ date_range[0] }} to {{ date_range[1] }} · {{ num_months }} months · {{ total_transactions }} transactions{{ ' · combined household view' if is_combined else '' }}</div>
+<div class="section-card">
+  <h2 class="section-title"><span class="ico">📅</span>{{ latest_month }} spend</h2>
+  <div style="display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;">
+    <div style="font-size:32px; font-weight:800;">${{ "{:,.0f}".format(latest_spend) }}</div>
+    {% if spend_delta is not none %}
+      <div class="stat-sub {{ 'up' if spend_delta > 0 else 'down' }}" style="font-size:14px;">
+        {{ '↑' if spend_delta > 0 else '↓' }} ${{ "{:,.0f}".format(spend_delta|abs) }} vs. previous month
+      </div>
+    {% endif %}
+  </div>
 </div>
 
-{% if is_combined and person_totals %}
-<div class="card section-card">
-  <h3 class="section-title"><span class="ico">👥</span>Spend by person</h3>
-  {% for p in person_totals %}
-  <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--grid); font-size:14px;">
-    <span style="font-weight:500;">{{ p.name }}</span>
-    <span style="font-variant-numeric: tabular-nums; font-weight:600;">${{ "%.2f"|format(p.total) }}</span>
+<div class="section-card">
+  <h2 class="section-title"><span class="ico">💡</span>Where to focus</h2>
+  <p class="section-desc">Food, and the consistent categories worth reviewing if you want to trim your budget.</p>
+  <div class="insight-row">
+    <div class="insight-dot"></div>
+    <div>Food (groceries + dining) ran <strong>${{ "%.0f"|format(food_this_month) }}</strong> in {{ latest_month }} — your typical month is about <strong>${{ "%.0f"|format(food_avg) }}</strong>.</div>
+  </div>
+  {% for r in top_cut_candidates %}
+  <div class="insight-row">
+    <div class="insight-dot"></div>
+    <div><strong>{{ r.category }}</strong> averages <strong>${{ "%.0f"|format(r.avg) }}/mo</strong> — one of your most consistent categories, so it's a good place to look if you want to cut back.</div>
   </div>
   {% endfor %}
-</div>
-{% endif %}
-
-<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap:14px; margin-bottom:28px;">
-  <div class="card stat-tile">
-    <div class="stat-icon" style="background:var(--accent-soft);">💵</div>
-    <div class="stat-label">Total spend</div>
-    <div class="stat-value">${{ "%.2f"|format(total_spend) }}</div>
+  {% if irregular_total > 0 %}
+  <div class="insight-row">
+    <div class="insight-dot" style="background: var(--muted);"></div>
+    <div>About <strong>${{ "%.0f"|format(irregular_total) }}</strong> of your spending is occasional/one-off (trips, big one-time purchases) — not part of a normal month, so don't judge your "typical" spending by it.</div>
   </div>
-  <div class="card stat-tile">
-    <div class="stat-icon" style="background:var(--accent-soft);">📅</div>
-    <div class="stat-label">Avg / month</div>
-    <div class="stat-value">${{ "%.2f"|format(avg_monthly) }}</div>
-  </div>
-  <div class="card stat-tile">
-    <div class="stat-icon" style="background:var(--accent-soft);">🔁</div>
-    <div class="stat-label">Recurring charges</div>
-    <div class="stat-value">{{ rec_stats.num_recurring }}</div>
-  </div>
-  <div class="card stat-tile">
-    <div class="stat-icon" style="background:var(--accent-soft);">🧾</div>
-    <div class="stat-label">Recurring est. / mo</div>
-    <div class="stat-value">${{ "%.2f"|format(rec_stats.total_est_monthly) }}</div>
-  </div>
-  <div class="card stat-tile">
-    <div class="stat-icon" style="background:{{ 'rgba(208,69,59,0.12)' if rec_stats.num_price_increases else 'rgba(12,163,79,0.12)' }};">{{ '⚠️' if rec_stats.num_price_increases else '✅' }}</div>
-    <div class="stat-label">Price increases</div>
-    <div class="stat-value" style="color:{{ 'var(--critical)' if rec_stats.num_price_increases else 'var(--good)' }};">{{ rec_stats.num_price_increases }}</div>
-  </div>
+  {% endif %}
 </div>
 
-{% if uncategorized_count > 0 %}
-<div class="flash success" style="display:flex; justify-content:space-between; align-items:center;">
-  <span>{{ uncategorized_count }} transactions are uncategorized.</span>
-  <a href="{{ url_for('main.uncategorized') }}" style="font-weight:700; color:inherit;">Review them →</a>
-</div>
-{% endif %}
-
-<div class="card section-card">
-  <h3 class="section-title"><span class="ico">📈</span>Monthly spend by category</h3>
-  <div class="legend" id="legend" style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:10px; font-size:12px; color:var(--text-secondary);"></div>
-  <div style="position:relative;">
-    <div id="chart"></div>
-    <div class="tooltip" id="tooltip" style="position:absolute; background:var(--surface-1); border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-size:12px; pointer-events:none; box-shadow:var(--shadow-hover); display:none; z-index:10;"></div>
-  </div>
+<div class="section-card">
+  <h2 class="section-title"><span class="ico">📈</span>Monthly spend by category</h2>
+  <div id="chart" style="width:100%; min-height:260px;"></div>
 </div>
 
-<div class="card section-card">
-  <h3 class="section-title"><span class="ico">🗂️</span>Monthly cost by category</h3>
-  <div style="font-size:13px; color:var(--text-secondary); margin-bottom:14px;">
-    Each category's spend per month, plus its average. The highest month per category is bolded — an easy way to spot when groceries or eating out ran above normal.
-  </div>
+<div class="section-card">
+  <h2 class="section-title"><span class="ico">🗂️</span>Monthly cost by category</h2>
+  <p class="section-desc">Bold = the highest month for that category. Badge shows a consistent monthly habit vs. an occasional/irregular expense.</p>
   <div style="overflow-x:auto;">
   <table class="pretty">
     <thead>
       <tr>
         <th>Category</th>
-        {% for m in months %}
-        <th style="text-align:right;">{{ m }}</th>
-        {% endfor %}
+        <th></th>
+        {% for m in months %}<th style="text-align:right;">{{ m }}</th>{% endfor %}
         <th style="text-align:right;">Avg</th>
       </tr>
     </thead>
     <tbody>
       {% for row in category_table %}
       <tr>
-        <td style="font-weight:500;">{{ row.category }}</td>
+        <td>{{ row.category }}</td>
+        <td><span class="badge {{ 'irregular' if row.irregular else 'consistent' }}">{{ 'Irregular' if row.irregular else 'Consistent' }}</span></td>
         {% for v in row["values"] %}
-        <td style="text-align:right; {% if v == row.max_val and v > 0 %}font-weight:700;{% endif %}">${{ "%.0f"|format(v) }}</td>
+          <td style="text-align:right; {{ 'font-weight:700;' if v == row.max_val and v > 0 else '' }}">{{ "${:,.0f}".format(v) if v > 0 else "—" }}</td>
         {% endfor %}
-        <td style="text-align:right; font-weight:700; color:var(--accent);">${{ "%.0f"|format(row.avg) }}</td>
+        <td style="text-align:right; font-weight:600;">${{ "{:,.0f}".format(row.avg) }}</td>
       </tr>
       {% endfor %}
     </tbody>
@@ -134,104 +158,131 @@
   </div>
 </div>
 
-<div class="card section-card">
-  <h3 class="section-title"><span class="ico">🔁</span>Recurring charges detected</h3>
+<div class="section-card">
+  <h2 class="section-title"><span class="ico">🔁</span>Recurring charges</h2>
+  <p class="section-desc">{{ rec_stats.num_recurring }} recurring charge(s) found, about ${{ "%.0f"|format(rec_stats.total_est_monthly) }}/mo total.
+    <a href="{{ url_for('main.recurring') }}">See all {{ recurring_count }} →</a></p>
   <table class="pretty">
-    <thead>
-      <tr>
-        <th>Merchant</th>
-        <th>Cadence</th>
-        <th style="text-align:right;">Amount</th>
-        <th style="text-align:right;">Est. Monthly</th>
-        <th>Since</th>
-        <th></th>
-      </tr>
-    </thead>
+    <thead><tr><th>Merchant</th><th>Cadence</th><th style="text-align:right;">Amount</th></tr></thead>
     <tbody>
       {% for r in recurring_rows %}
       <tr>
-        <td style="font-weight:500;">{{ r.merchant }}</td>
+        <td>{{ r.merchant }}{% if r.price_increase_flag %} <span class="badge irregular">Price ↑</span>{% endif %}</td>
         <td>{{ r.cadence }}</td>
-        <td style="text-align:right;">${{ "%.2f"|format(r.last_amount) }}</td>
-        <td style="text-align:right;">${{ "%.2f"|format(r.est_monthly_cost) }}</td>
-        <td>{{ r.first_date }}</td>
-        <td style="color:var(--critical); font-weight:600;">{% if r.price_increase_flag %}↑ price increase{% endif %}</td>
+        <td style="text-align:right; font-weight:600;">${{ "%.2f"|format(r.last_amount) }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
 
-<div class="card section-card">
-  <h3 class="section-title"><span class="ico">🏪</span>Top merchants by total spend</h3>
-  {% for row in top_merchant_rows %}
+<div class="section-card">
+  <h2 class="section-title"><span class="ico">🏪</span>Top merchants</h2>
+  {% for m in top_merchant_rows %}
   <div class="bar-row">
-    <div class="bar-label">{{ row.merchant }}</div>
-    <div class="bar-track"><div class="bar-fill" style="width:{{ (row.total / max_merchant * 100)|round(1) }}%;"></div></div>
-    <div class="bar-value">${{ "%.2f"|format(row.total) }}</div>
+    <div class="bar-name">{{ m.merchant }}</div>
+    <div class="bar-track"><div class="bar-fill" style="width: {{ (m.total / max_merchant * 100)|round(1) }}%;"></div></div>
+    <div class="bar-amt">${{ "{:,.0f}".format(m.total) }}</div>
   </div>
   {% endfor %}
 </div>
 
+{% if is_combined and person_totals %}
+<div class="section-card">
+  <h2 class="section-title"><span class="ico">👥</span>By person</h2>
+  {% set max_person = person_totals[0].total %}
+  {% for p in person_totals %}
+  <div class="bar-row">
+    <div class="bar-name">{{ p.name }}</div>
+    <div class="bar-track"><div class="bar-fill" style="width: {{ (p.total / max_person * 100)|round(1) }}%;"></div></div>
+    <div class="bar-amt">${{ "{:,.0f}".format(p.total) }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if uncategorized_count > 0 %}
+<div class="section-card">
+  <h2 class="section-title"><span class="ico">⚠️</span>{{ uncategorized_count }} uncategorized transaction(s)</h2>
+  <p class="section-desc" style="margin-bottom:8px;">These didn't match a category rule yet.</p>
+  <a class="btn btn-ghost" href="{{ url_for('main.transactions', category='Uncategorized') }}">Review & categorize →</a>
+</div>
+{% endif %}
+
 <script>
-const months = {{ months|tojson }};
-const series = {{ series_data|tojson }};
-const colors = {{ color_map|tojson }};
-const cats = Object.keys(series);
+(function() {
+  var months = {{ months|tojson }};
+  var seriesData = {{ series_data|tojson }};
+  var colorMap = {{ color_map|tojson }};
+  var el = document.getElementById('chart');
+  if (!months.length) { el.innerHTML = '<p style="color:var(--muted);">Not enough data yet.</p>'; return; }
 
-const legend = document.getElementById('legend');
-cats.forEach(c => {
-  const el = document.createElement('div');
-  el.style.display = 'flex'; el.style.alignItems = 'center'; el.style.gap = '6px';
-  el.innerHTML = `<span style="width:10px;height:10px;border-radius:3px;background:${colors[c]};display:inline-block;"></span>${c}`;
-  legend.appendChild(el);
-});
+  var W = el.clientWidth || 800, H = 260, padL = 46, padB = 26, padT = 10;
+  var plotW = W - padL - 10, plotH = H - padT - padB;
+  var cats = Object.keys(seriesData);
+  var totals = months.map(function(_, i) { return cats.reduce(function(s,c){ return s + seriesData[c][i]; }, 0); });
+  var maxTotal = Math.max.apply(null, totals.concat([1]));
+  var niceMax = Math.ceil(maxTotal / 500) * 500 || 500;
+  var barW = Math.max(10, plotW / months.length * 0.6);
+  var gap = plotW / months.length;
 
-const chartEl = document.getElementById('chart');
-const tooltip = document.getElementById('tooltip');
-const W = chartEl.clientWidth || 1000, H = 260;
-const padL = 55, padB = 30, padT = 10, padR = 10;
-const plotW = W - padL - padR, plotH = H - padT - padB;
+  var svgNS = "http://www.w3.org/2000/svg";
+  var svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+  svg.setAttribute("width", "100%"); svg.setAttribute("height", H);
+  svg.style.overflow = "visible";
+  var textColor = getComputedStyle(document.body).getPropertyValue('--text-secondary').trim() || '#5c5a52';
+  var gridColor = getComputedStyle(document.body).getPropertyValue('--grid').trim() || '#e8e6e0';
 
-const totals = months.map((_, i) => cats.reduce((s, c) => s + (series[c][i] || 0), 0));
-const maxTotal = Math.max(...totals, 1);
-const niceMax = Math.ceil(maxTotal / 500) * 500 || 500;
-
-const barW = plotW / months.length * 0.6;
-const gap = plotW / months.length;
-
-let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
-const gridSteps = 4;
-for (let i = 0; i <= gridSteps; i++) {
-  const y = padT + plotH - (plotH * i / gridSteps);
-  const val = niceMax * i / gridSteps;
-  svg += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="var(--grid)" stroke-width="1"/>`;
-  svg += `<text x="${padL-8}" y="${y+4}" text-anchor="end" font-size="11" fill="var(--muted)">$${val.toLocaleString()}</text>`;
-}
-months.forEach((m, i) => {
-  let yOffset = 0;
-  const x = padL + gap * i + (gap - barW) / 2;
-  cats.forEach(c => {
-    const val = series[c][i] || 0;
-    const h = (val / niceMax) * plotH;
-    const y = padT + plotH - yOffset - h;
-    svg += `<rect class="seg" data-month="${m}" data-cat="${c}" data-val="${val.toFixed(2)}" x="${x}" y="${y}" width="${barW}" height="${Math.max(h-1,0)}" fill="${colors[c]}" rx="3"/>`;
-    yOffset += h;
+  [0, 0.5, 1].forEach(function(f) {
+    var y = padT + plotH - f * plotH;
+    var line = document.createElementNS(svgNS, "line");
+    line.setAttribute("x1", padL); line.setAttribute("x2", W - 6);
+    line.setAttribute("y1", y); line.setAttribute("y2", y);
+    line.setAttribute("stroke", gridColor); line.setAttribute("stroke-width", "1");
+    svg.appendChild(line);
+    var t = document.createElementNS(svgNS, "text");
+    t.setAttribute("x", 4); t.setAttribute("y", y + 4); t.setAttribute("font-size", "10.5");
+    t.setAttribute("fill", textColor); t.textContent = "$" + Math.round(f * niceMax).toLocaleString();
+    svg.appendChild(t);
   });
-  svg += `<text x="${x + barW/2}" y="${H-8}" text-anchor="middle" font-size="11" fill="var(--muted)">${m}</text>`;
-});
-svg += `</svg>`;
-chartEl.innerHTML = svg;
 
-chartEl.querySelectorAll('.seg').forEach(seg => {
-  seg.addEventListener('mousemove', e => {
-    tooltip.style.display = 'block';
-    tooltip.style.left = (e.offsetX + 12) + 'px';
-    tooltip.style.top = (e.offsetY - 10) + 'px';
-    tooltip.innerHTML = `<b>${seg.dataset.cat}</b><br>${seg.dataset.month}: $${Number(seg.dataset.val).toLocaleString(undefined,{minimumFractionDigits:2})}`;
+  months.forEach(function(m, i) {
+    var x = padL + i * gap + (gap - barW) / 2;
+    var yCursor = padT + plotH;
+    cats.forEach(function(cat) {
+      var v = seriesData[cat][i];
+      if (!v) return;
+      var h = (v / niceMax) * plotH;
+      var rect = document.createElementNS(svgNS, "rect");
+      rect.setAttribute("x", x); rect.setAttribute("width", barW);
+      rect.setAttribute("y", yCursor - h); rect.setAttribute("height", Math.max(h, 0));
+      rect.setAttribute("fill", colorMap[cat]); rect.setAttribute("rx", "2");
+      var title = document.createElementNS(svgNS, "title");
+      title.textContent = cat + " · " + m + ": $" + v.toLocaleString();
+      rect.appendChild(title);
+      svg.appendChild(rect);
+      yCursor -= h;
+    });
+    var lbl = document.createElementNS(svgNS, "text");
+    lbl.setAttribute("x", x + barW / 2); lbl.setAttribute("y", H - 6);
+    lbl.setAttribute("font-size", "10.5"); lbl.setAttribute("text-anchor", "middle");
+    lbl.setAttribute("fill", textColor); lbl.textContent = m.slice(5);
+    svg.appendChild(lbl);
   });
-  seg.addEventListener('mouseleave', () => tooltip.style.display = 'none');
-});
+
+  el.appendChild(svg);
+
+  var legend = document.createElement("div");
+  legend.style.cssText = "display:flex; flex-wrap:wrap; gap:12px; margin-top:10px; font-size:12px;";
+  cats.forEach(function(cat) {
+    var item = document.createElement("span");
+    item.style.cssText = "display:flex; align-items:center; gap:5px; color:" + textColor + ";";
+    item.innerHTML = '<span style="width:9px;height:9px;border-radius:2px;background:' + colorMap[cat] + ';display:inline-block;"></span>' + cat;
+    legend.appendChild(item);
+  });
+  el.appendChild(legend);
+})();
 </script>
 
 {% endif %}

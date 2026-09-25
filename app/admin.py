@@ -3,6 +3,14 @@ A tiny setup page for creating user accounts through the browser, for hosts
 (like Render's free tier) that don't offer shell/SSH access to the running
 service. Protected by a secret key set as the SETUP_KEY environment
 variable -- without that env var set, this route refuses everything.
+
+Usage: visit
+    /setup?key=<SETUP_KEY>&users=ryan,ellie&household=Gaughan+Household
+(household is optional -- omit it to create fully separate, unlinked accounts)
+
+Safe to leave in place: creating already-existing usernames is a no-op, and
+nothing here works without the secret key, which only you have (find it in
+Render's dashboard under the service's Environment tab).
 """
 import os
 import secrets
@@ -68,6 +76,7 @@ def setup():
         lines.append(f"{uname:<20} {pw:<20}")
 
     lines.append("")
-    lines.append("Save these passwords now -- they won't be shown again.")
+    lines.append("Save these passwords now -- they won't be shown again. "
+                  "Each person will be asked to set their own password on first login.")
 
     return Response("\n".join(lines), mimetype="text/plain")

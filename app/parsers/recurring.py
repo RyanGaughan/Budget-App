@@ -114,6 +114,8 @@ def detect_recurring(df, min_occurrences=2, amount_tolerance_pct=0.15):
 
 
 def recurring_summary_stats(recurring_df):
+    if recurring_df is None or recurring_df.empty or "is_recurring" not in recurring_df.columns:
+        return {"num_recurring": 0, "total_est_monthly": 0, "num_price_increases": 0}
     rec = recurring_df[recurring_df["is_recurring"]]
     return {
         "num_recurring": len(rec),

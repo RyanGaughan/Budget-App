@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Statements & Accounts · Gaughan Budget{% endblock %}
+{% block content %}
+<style>
+  .section-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; padding: 24px; box-shadow: var(--shadow); margin-bottom: 20px; }
+  .section-title { display: flex; align-items: center; gap: 10px; margin: 0 0 4px; font-size: 17px; }
+  .section-title .ico { width: 30px; height: 30px; border-radius: 9px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .section-desc { color: var(--text-secondary); font-size: 13.5px; margin: 0 0 18px; }
+  .row-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--grid); flex-wrap: wrap; }
+  .row-item:last-child { border-bottom: none; }
+  .row-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--surface-2); display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+  .row-main { flex: 1 1 160px; min-width: 120px; }
+  .row-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .row-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin-left: auto; }
+  .inline-balance-form { display: flex; align-items: center; gap: 6px; }
+  .inline-balance-form input { width: 110px; margin: 0; padding: 6px 8px; font-size: 13px; }
+  .add-form-grid { display: grid; grid-template-columns: 2fr 1.2fr 1fr auto; gap: 10px; align-items: end; max-width: 640px; }
+  .add-form-grid label { margin-bottom: 4px; }
+  .add-form-grid input, .add-form-grid select { margin-bottom: 0; }
+  .empty-note { color: var(--muted); font-size: 13.5px; padding: 8px 0; }
+  @media (max-width: 700px) { .add-form-grid { grid-template-columns: 1fr; } .row-item { flex-wrap: wrap; } }
+</style>
+
+<div class="section-card">
+  <h2 class="section-title"><span class="ico">🏦</span>Your accounts</h2>
+  <p class="section-desc">Add each credit card, bank account, and investment/savings account. Statements get filed under a card or bank account; balances here drive your net worth.</p>
+
+  {% if accounts %}
+  {% for a in accounts %}
+  <div class="row-item">
+    <div class="row-icon">{{ a.icon }}</div>
+    <div class="row-main">
+      <div class="row-name">{{ a.name }}</div>
+      <div class="row-sub">{{ a.type_label }}{% if a.balance is not none %} · ${{ "{:,.2f}".format(a.balance) }}{% if a.is_liability %} owed{% endif %}{% endif %}</div>
+    </div>
+    <div class="row-actions">
+      <form class="inline-balance-form" method="POST" action="{{ url_for('main.update_balance', account_id=a.id) }}">
+        <input type="text" inputmode="decimal" name="balance" placeholder="Balance" value="{{ '%.2f'|format(a.balance) if a.balance is not none else '' }}">
+        <button type="submit" class="btn-ghost btn-sm">Save</button>
+      </form>
+      <form class="inline-form" method="POST" action="{{ url_for('main.delete_account', account_id=a.id) }}" onsubmit="return confirm('Remove {{ a.name }}? Its statements will be kept but unassigned.');">
+        <button type="submit" class="btn-danger btn-sm">Remove</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <p class="empty-note">No accounts yet — add your first one below.</p>
+  {% endif %}
+
+  <form method="POST" action="{{ url_for('main.add_account') }}" style="margin-top:18px; max-width:none;">
+    <div class="add-form-grid">
+      <div>
+        <label>Account name</label>
+        <input type="text" name="name" placeholder="e.g. Citi Double Cash" required>
+      </div>
+      <div>
+        <label>Type</label>
+        <select name="account_type">
+          <option value="credit_card">Credit card</option>
+          <option value="bank">Bank account</option>
+          <option value="investment">Investment / savings</option>
+        </select>
+      </div>
+      <div>
+        <label>Balance (optional)</label>
+        <input type="text" inputmode="decimal" name="balance" placeholder="0.00">
+      </div>
+      <div><button type="submit">Add account</button></div>
+    </div>
+  </form>
+</div>
+
+<div class="section-card">
+  <h2 class="section-title"><span class="ico">⬆️</span>Upload a statement</h2>
+  <p class="section-desc">Upload credit card or bank statement PDFs — select multiple at once. Re-uploading the same statement won't create duplicate transactions.</p>
+  {% if not statement_accounts %}
+    <p class="empty-note">Add a credit card or bank account above first, so uploads have somewhere to go.</p>
+  {% else %}
+  <form method="POST" action="{{ url_for('main.upload') }}" enctype="multipart/form-data" style="max-width:480px;">
+    <label>Which account is this for?</label>
+    <select name="account_id" required>
+      {% for a in statement_accounts %}
+      <option value="{{ a.id }}">{{ a.icon }} {{ a.name }} ({{ a.type_label }})</option>
+      {% endfor %}
+    </select>
+    <label>Statement PDFs</label>
+    <input type="file" name="statements" accept="application/pdf" multiple required>
+    <label style="display:flex; align-items:center; gap:8px; margin-bottom:20px; font-weight:400;">
+      <input type="checkbox" name="flip_sign" style="width:auto; margin:0;">
+      Charges print as positive numbers on these statements (typical for credit cards)
+    </label>
+    <button type="submit">Upload &amp; process</button>
+  </form>
+  {% endif %}
+</div>
+
+<div class="section-card">
+  <h2 class="section-title"><span class="ico">📄</span>Uploaded statements</h2>
+  {% if uploads %}
+  {% for u in uploads %}
+  <div class="row-item">
+    <div class="row-icon">{{ u.account_ref.icon if u.account_ref else '📄' }}</div>
+    <div class="row-main">
+      <div class="row-name">{{ u.filename }}</div>
+      <div class="row-sub">{{ u.account_ref.name if u.account_ref else 'Unassigned' }} · {{ u.num_transactions }} transactions · uploaded {{ u.uploaded_at.strftime('%b %d, %Y') }}</div>
+    </div>
+    <div class="row-actions">
+      <form class="inline-form" method="POST" action="{{ url_for('main.delete_statement', upload_id=u.id) }}" onsubmit="return confirm('Delete {{ u.filename }} and its transactions? This can\'t be undone.');">
+        <button type="submit" class="btn-danger btn-sm">Delete</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <p class="empty-note">Nothing uploaded yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Transactions · Gaughan Budget{% endblock %}
+{% block content %}
+<style>
+  .section-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; padding: 24px; box-shadow: var(--shadow); margin-bottom: 20px; }
+  .section-title { display: flex; align-items: center; gap: 10px; margin: 0 0 4px; font-size: 17px; }
+  .section-title .ico { width: 30px; height: 30px; border-radius: 9px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .section-desc { color: var(--text-secondary); font-size: 13.5px; margin: 0 0 18px; }
+  .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; margin-bottom: 18px; }
+  .filter-bar > div { min-width: 160px; }
+  .filter-bar label { margin-bottom: 4px; }
+  .filter-bar input, .filter-bar select { margin-bottom: 0; }
+  table.pretty { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.pretty th { text-align: left; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--grid); }
+  table.pretty td { padding: 9px 10px; border-bottom: 1px solid var(--grid); vertical-align: middle; }
+  table.pretty tbody tr:hover { background: var(--surface-2); }
+  .cat-select { margin: 0; padding: 6px 8px; font-size: 12.5px; width: auto; min-width: 150px; }
+  .badge-uncat { background: var(--critical-soft); color: var(--critical); font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 20px; text-transform: uppercase; }
+  .empty-note { color: var(--muted); font-size: 13.5px; padding: 8px 0; }
+</style>
+
+<div class="section-card">
+  <h2 class="section-title"><span class="ico">🧾</span>Transactions</h2>
+  <p class="section-desc">{{ total_count }} matching transaction(s){% if total_count > 500 %} — showing the most recent 500{% endif %}. Recategorizing one updates every transaction from that same merchant, and remembers it for future uploads.</p>
+
+  <form class="filter-bar" method="GET">
+    {% if is_combined %}<input type="hidden" name="scope" value="household">{% endif %}
+    <div>
+      <label>Category</label>
+      <select name="category" onchange="this.form.submit()">
+        <option value="">All categories</option>
+        {% for c in categories %}
+        <option value="{{ c }}" {{ 'selected' if c == category else '' }}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label>Month</label>
+      <select name="month" onchange="this.form.submit()">
+        <option value="">All months</option>
+        {% for m in all_months %}
+        <option value="{{ m }}" {{ 'selected' if m == month else '' }}>{{ m }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div style="flex:1;">
+      <label>Search</label>
+      <input type="text" name="q" value="{{ q }}" placeholder="Merchant name...">
+    </div>
+    <div><button type="submit" class="btn-ghost">Filter</button></div>
+    {% if category or month or q %}<div><a class="btn btn-ghost" href="{{ url_for('main.transactions') }}">Clear</a></div>{% endif %}
+  </form>
+
+  {% if rows %}
+  <div style="overflow-x:auto;">
+  <table class="pretty">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Description</th>
+        {% if is_combined %}<th>Who</th>{% endif %}
+        <th style="text-align:right;">Amount</th>
+        <th>Category</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in rows %}
+      <tr>
+        <td style="white-space:nowrap;">{{ t.date.strftime('%b %d, %Y') }}</td>
+        <td>{{ t.description }}</td>
+        {% if is_combined %}<td>{{ t.owner }}</td>{% endif %}
+        <td style="text-align:right; white-space:nowrap; {{ 'color:var(--good);' if t.amount > 0 else '' }}">{{ "${:,.2f}".format(t.amount) }}</td>
+        <td>
+          <form class="inline-form" method="POST" action="{{ url_for('main.recategorize') }}">
+            <input type="hidden" name="description" value="{{ t.description }}">
+            <input type="hidden" name="filter_category" value="{{ category }}"><input type="hidden" name="month" value="{{ month }}"><input type="hidden" name="q" value="{{ q }}">
+            {% if is_combined %}<input type="hidden" name="scope" value="household">{% endif %}
+            <select name="category" class="cat-select" onchange="this.form.submit()">
+              {% for c in categories %}
+              <option value="{{ c }}" {{ 'selected' if c == t.category else '' }}>{{ c }}</option>
+              {% endfor %}
+            </select>
+          </form>
+          {% if t.category == 'Uncategorized' %}<span class="badge-uncat">New</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p class="empty-note">No transactions match these filters.</p>
+  {% endif %}
+</div>
+{% endblock %}
